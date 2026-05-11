@@ -1,0 +1,50 @@
+services:
+  owncast:
+    build:
+      context: ./owncast
+    container_name: owncast
+    restart: always
+    ports:
+      # RTMP ingest.
+      - "1935:1935"
+
+      # Optional local debugging.
+      - "6767:8080"
+    volumes:
+      - ./data:/app/data
+
+    # Intel VAAPI / Quick Sync device access for Owncast transcoding.
+    devices:
+      - /dev/dri:/dev/dri
+
+    # Match the host render group so Owncast can open /dev/dri/renderD128.
+    group_add:
+      - "${RENDER_GID}"
+
+    environment:
+      # Force Intel media-driver / iHD for your i5-10400 UHD 630.
+      LIBVA_DRIVER_NAME: iHD
+
+  ffmpeg-source:
+    build:
+      context: ./ffmpeg-source
+    container_name: ffmpeg-source
+    restart: always
+    depends_on:
+      - owncast
+    env_file:
+      - .env
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - "${RENDER_GID}"
+    environment:
+      LIBVA_DRIVER_NAME: iHD
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: owncast-cloudflared
+    restart: always
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARED_TOKEN}
+    depends_on:
+      - owncast

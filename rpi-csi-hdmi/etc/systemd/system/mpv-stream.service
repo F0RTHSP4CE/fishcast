@@ -1,0 +1,27 @@
+[Unit]
+Description=MPV low-latency stream player
+After=ustreamer-tc358743.service
+Requires=ustreamer-tc358743.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+#ExecStart=/usr/bin/mpv --profile=low-latency http://127.0.0.1:8080/stream
+ExecStart=/usr/bin/mpv \
+  --no-config \
+  --profile=low-latency \
+  --untimed \
+  --no-cache \
+  --demuxer-lavf-o=fflags=nobuffer \
+  --demuxer-lavf-o=probesize=32 \
+  --demuxer-lavf-o=analyzeduration=0 \
+  --vd-lavc-threads=1 \
+  --framedrop=vo \
+  http://127.0.0.1:8080/stream
+
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+

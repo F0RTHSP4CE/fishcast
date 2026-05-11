@@ -1,0 +1,25 @@
+[Unit]
+Description=uStreamer TC358743 HDMI capture
+After=tc358743-edid.service network-online.target
+Requires=tc358743-edid.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/tc358743
+#ExecStart=/opt/tc358743/ustreamer/ustreamer --dv-timings --device=/dev/video0 --format=bgr24 --host=0.0.0.0 --encoder=m2m-image --workers=3 --persistent
+ExecStart=/opt/tc358743/ustreamer/ustreamer \
+  --dv-timings \
+  --device=/dev/video0 \
+  --format=uyvy \
+  --host=0.0.0.0 \
+  --encoder=m2m-image \
+  --workers=3 \
+  --buffers=4 \
+  --persistent
+
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

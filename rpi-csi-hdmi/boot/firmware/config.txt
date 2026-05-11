@@ -1,0 +1,2 @@
+dtoverlay=tc358743,4lane=1
+
