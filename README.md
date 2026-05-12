@@ -1,4 +1,4 @@
-# F0 ownstream setup
+# F0 (fishtank) streaming setup
 
 raspberry pi with hdmi-csi capture card as a video source > ffmpeg > `ownstream` live video streaming platform.
 

@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libevent-dev \
     libssl-dev \
     libdrm-dev \
+    libbsd-dev \
     && rm -rf /var/lib/apt/lists/*
 
 RUN git clone --depth=1 https://github.com/pikvm/ustreamer /build/ustreamer
@@ -31,6 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libevent-2.1-7 \
     libssl3 \
     libdrm2 \
+    libbsd0 \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
