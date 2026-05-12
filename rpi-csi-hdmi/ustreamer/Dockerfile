@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgpiod-dev \
     libevent-dev \
     libssl-dev \
+    libdrm-dev \
     && rm -rf /var/lib/apt/lists/*
 
 RUN git clone --depth=1 https://github.com/pikvm/ustreamer /build/ustreamer
@@ -29,6 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgpiod2 \
     libevent-2.1-7 \
     libssl3 \
+    libdrm2 \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
