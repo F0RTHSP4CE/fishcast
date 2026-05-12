@@ -32,19 +32,11 @@ services:
     depends_on:
       edid-setup:
         condition: service_completed_successfully
-    devices:
-      - /dev/video0:/dev/video0
-      # V4L2 M2M codec devices used by the m2m-image hardware JPEG encoder.
-      # On RPi these are bcm2835-codec nodes; exact numbers vary — check with:
-      #   ls /dev/video*  and  v4l2-ctl --list-devices
-      - /dev/video10:/dev/video10
-      - /dev/video11:/dev/video11
-      - /dev/video12:/dev/video12
-      # Media controller devices required by the V4L2 M2M pipeline
-      - /dev/media0:/dev/media0
-      - /dev/media1:/dev/media1
-    group_add:
-      - video
+    # privileged is required so the m2m-image encoder can scan and open
+    # bcm2835-codec V4L2 M2M nodes (/dev/video10–18, /dev/video31, etc.).
+    # Exact device numbers vary by kernel/firmware — privileged avoids
+    # having to enumerate them manually.
+    privileged: true
     ports:
       - "8080:8080"
     restart: always
