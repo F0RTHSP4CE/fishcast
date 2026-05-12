@@ -45,6 +45,9 @@ services:
       - --device=/dev/video0
       - --format=uyvy
       - --host=0.0.0.0
+      # m2m-image uses bcm2835-codec HW JPEG encoder. Safe to use here because
+      # the gstreamer preview service uses software jpegdec, not v4l2jpegdec,
+      # so there is no codec contention between the two services.
       - --encoder=m2m-image
       - --workers=3
       - --buffers=4
@@ -52,33 +55,16 @@ services:
 
 
   # Optional local preview — only started with: docker compose --profile preview up
-  mpv:
+  # GStreamer pipeline: souphttpsrc → multipartdemux → jpegdec → fbdevsink
+  # fbdevsink writes directly to /dev/fb0 — no DRM plane ownership needed,
+  # works reliably from inside a container without fighting fbcon.
+  gstreamer:
     profiles:
       - preview
     build:
-      context: ./mpv
+      context: ./gstreamer
     depends_on:
       - ustreamer
-    # DRM/KMS output: takes over the display directly, no X server required.
-    # For X11 output instead, replace --vo=drm with --vo=x11 (or remove --vo),
-    # and add:  environment: [DISPLAY=:0]
-    #           volumes: [/tmp/.X11-unix:/tmp/.X11-unix:rw]
     devices:
-      - /dev/dri/card0:/dev/dri/card0
-      - /dev/dri/renderD128:/dev/dri/renderD128
-    group_add:
-      - video
-      - render
-    command:
-      - --no-config
-      - --vo=drm
-      - --profile=low-latency
-      - --untimed
-      - --no-cache
-      - --demuxer-lavf-o=fflags=nobuffer
-      - --demuxer-lavf-o=probesize=32
-      - --demuxer-lavf-o=analyzeduration=0
-      - --vd-lavc-threads=1
-      - --framedrop=vo
-      - http://ustreamer:8080/stream
+      - /dev/fb0:/dev/fb0
     restart: on-failure
