@@ -8,7 +8,6 @@ includes services specifically tuned for tc358743 hdmi-to-csi adapter
 ## howto
 
 1. edit `/boot/firmware/config.txt` — append lines from the files in the repository to the original file for your board
-2. copy files from the repo to the rpi 
-3. `git clone https://github.com/pikvm/ustreamer /opt/tc358743/ustreamer` 
-   and follow https://github.com/pikvm/ustreamer#building
-
+2. install docker + docker compose
+3. `docker compose up --build -d`
+   

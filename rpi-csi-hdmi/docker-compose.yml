@@ -1,0 +1,92 @@
+# TC358743 HDMI-to-CSI capture stack for Raspberry Pi 3/4
+#
+# Start core services:
+#   docker compose up -d
+#
+# Start with local HDMI preview (requires a display):
+#   docker compose --profile preview up -d
+#
+# Prerequisites on the host:
+#   - dtoverlay=tc358743,4lane=1 in /boot/firmware/config.txt
+#   - user running docker must be in the 'video' group, or run with sudo
+
+services:
+
+  # Oneshot: programs the TC358743 EDID over V4L2 before capture starts.
+  # Re-run manually if needed: docker compose up --force-recreate edid-setup
+  edid-setup:
+    build:
+      context: ./edid-setup
+    devices:
+      - /dev/video0:/dev/video0
+    volumes:
+      - ./edid-setup:/opt/edid:ro
+    command:
+      - v4l2-ctl
+      - --set-edid=file=/opt/edid/tc358743_gopro_1080p24_30_no_1080p60_edid_hex.txt
+    restart: "no"
+
+  ustreamer:
+    build:
+      context: ./ustreamer
+    depends_on:
+      edid-setup:
+        condition: service_completed_successfully
+    devices:
+      - /dev/video0:/dev/video0
+      # V4L2 M2M codec devices used by the m2m-image hardware JPEG encoder.
+      # On RPi these are bcm2835-codec nodes; exact numbers vary — check with:
+      #   ls /dev/video*  and  v4l2-ctl --list-devices
+      - /dev/video10:/dev/video10
+      - /dev/video11:/dev/video11
+      - /dev/video12:/dev/video12
+      # Media controller devices required by the V4L2 M2M pipeline
+      - /dev/media0:/dev/media0
+      - /dev/media1:/dev/media1
+    group_add:
+      - video
+    ports:
+      - "8080:8080"
+    restart: always
+    command:
+      - --dv-timings
+      - --device=/dev/video0
+      - --format=uyvy
+      - --host=0.0.0.0
+      - --encoder=m2m-image
+      - --workers=3
+      - --buffers=4
+      - --persistent
+
+
+  # Optional local preview — only started with: docker compose --profile preview up
+  mpv:
+    profiles:
+      - preview
+    build:
+      context: ./mpv
+    depends_on:
+      - ustreamer
+    # DRM/KMS output: takes over the display directly, no X server required.
+    # For X11 output instead, replace --vo=drm with --vo=x11 (or remove --vo),
+    # and add:  environment: [DISPLAY=:0]
+    #           volumes: [/tmp/.X11-unix:/tmp/.X11-unix:rw]
+    devices:
+      - /dev/dri/card0:/dev/dri/card0
+      - /dev/dri/renderD128:/dev/dri/renderD128
+    group_add:
+      - video
+      - render
+    command:
+      - --no-config
+      - --vo=drm
+      - --profile=low-latency
+      - --untimed
+      - --no-cache
+      - --demuxer-lavf-o=fflags=nobuffer
+      - --demuxer-lavf-o=probesize=32
+      - --demuxer-lavf-o=analyzeduration=0
+      - --vd-lavc-threads=1
+      - --framedrop=vo
+      - http://ustreamer:8080/stream
+    restart: on-failure
