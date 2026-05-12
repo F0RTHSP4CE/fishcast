@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libudev1 \
     libgpiod2 \
     libevent-2.1-7 \
+    libevent-pthreads-2.1-7 \
     libssl3 \
     libdrm2 \
     libbsd0 \
