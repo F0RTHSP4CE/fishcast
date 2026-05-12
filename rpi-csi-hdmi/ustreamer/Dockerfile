@@ -2,8 +2,6 @@
 FROM debian:bookworm-slim AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    git \
     build-essential \
     pkg-config \
     libjpeg-dev \
@@ -15,7 +13,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libbsd-dev \
     && rm -rf /var/lib/apt/lists/*
 
-RUN git clone --depth=1 https://github.com/pikvm/ustreamer /build/ustreamer
+# BuildKit clones via the Docker daemon — no git/ca-certs needed inside the container
+ADD https://github.com/pikvm/ustreamer.git /build/ustreamer
 
 WORKDIR /build/ustreamer
 
